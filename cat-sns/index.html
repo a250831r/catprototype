@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Nyamelo</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+body{
+    background-color: rgb(191,140,176);
+    margin:0;
+    padding-bottom:80px;
+    font-family:sans-serif;
+}
+
+.page{
+    display:none;
+}
+
+.active-page{
+    display:block;
+}
+
+.navbar{
+    background-color:rgb(191,140,176);
+}
+
+.video-area{
+    width:90%;
+    height:70vh;
+    background:#111;
+    margin:20px auto;
+    border-radius:30px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    color:white;
+    font-size:50px;
+}
+
+.side-buttons{
+    position:absolute;
+    right:20px;
+    bottom:150px;
+
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+
+    color:white;
+    font-size:28px;
+}
+
+.bottom-nav{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#c99abb;
+    border-top:1px solid #aaa;
+    z-index:1000;
+}
+
+.bottom-nav button{
+    background:none;
+    border:none;
+    font-size:28px;
+}
+
+.cat-card{
+    background:white;
+    border-radius:15px;
+    padding:10px;
+    text-align:center;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+}
+
+.cat-img{
+    background:#ddd;
+    height:100px;
+    border-radius:10px;
+}
+
+.profile-pic{
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    background:white;
+    margin:auto;
+}
+
+.message-item{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.rank-card{
+    background:white;
+    border-radius:10px;
+    padding:10px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+
+<nav class="navbar border-bottom">
+
+<div class="container-fluid">
+
+<span class="navbar-brand fw-bold fs-2 text-white">
+🐱 Nyamelo
+</span>
+
+<form class="d-flex">
+
+<input
+class="form-control me-2"
+type="search"
+placeholder="猫を検索"
+style="border-radius:20px;width:250px;"
+>
+
+<button
+class="btn btn-light"
+type="button"
+onclick="showPage('search')">
+🔍
+</button>
+
+</form>
+
+</div>
+
+</nav>
+
+<!-- HOME -->
+
+<div id="home" class="page active-page">
+
+<div style="position:relative">
+
+<div class="video-area">
+猫動画
+</div>
+
+<div class="side-buttons">
+<div>❤️</div>
+<div>💬</div>
+<div>🔖</div>
+</div>
+
+</div>
+
+<div class="container text-white">
+
+<h4>@mofu_cat</h4>
+
+<p>
+マンチカン / 2歳<br>
+今日も元気に遊んでます🐾
+</p>
+
+</div>
+
+</div>
+
+<!-- SEARCH -->
+
+<div id="search" class="page">
+
+<div class="container mt-4">
+
+<h3 class="mb-4">検索</h3>
+
+<div class="row g-3">
+
+<div class="col-6">
+<button class="btn btn-light w-100"
+onclick="showPage('result')">
+種類
+</button>
+</div>
+
+<div class="col-6">
+<button class="btn btn-light w-100"
+onclick="showPage('result')">
+性格
+</button>
+</div>
+
+<div class="col-6">
+<button class="btn btn-light w-100"
+onclick="showPage('result')">
+年齢
+</button>
+</div>
+
+<div class="col-6">
+<button class="btn btn-light w-100"
+onclick="showPage('result')">
+地域
+</button>
+</div>
+
+</div>
+
+<div class="mt-4">
+
+<h5>あなたにオススメ</h5>
+
+<div class="cat-card mt-2">
+🐱 マンチカン特集
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- SEARCH RESULT -->
+
+<div id="result" class="page">
+
+<div class="container mt-4">
+
+<h3>検索結果</h3>
+
+<div class="grid mt-3">
+
+<div class="cat-card">
+<div class="cat-img"></div>
+もち
+</div>
+
+<div class="cat-card">
+<div class="cat-img"></div>
+レオ
+</div>
+
+<div class="cat-card">
+<div class="cat-img"></div>
+ソラ
+</div>
+
+<div class="cat-card">
+<div class="cat-img"></div>
+マロン
+</div>
+
+<div class="cat-card">
+<div class="cat-img"></div>
+ココ
+</div>
+
+<div class="cat-card">
+<div class="cat-img"></div>
+ハナ
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- RANKING -->
+
+<div id="ranking" class="page">
+
+<div class="container mt-4">
+
+<h3>🏆 ランキング</h3>
+
+<div class="row g-3 mt-2">
+
+<div class="col-6">
+<div class="rank-card">
+🥇 もち
+</div>
+</div>
+
+<div class="col-6">
+<div class="rank-card">
+🥈 レオ
+</div>
+</div>
+
+<div class="col-6">
+<div class="rank-card">
+🥉 ソラ
+</div>
+</div>
+
+<div class="col-6">
+<div class="rank-card">
+4位 ハナ
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- MESSAGE -->
+
+<div id="message" class="page">
+
+<div class="container mt-4">
+
+<h3>メッセージ</h3>
+
+<div class="message-item">
+🐱 もち
+</div>
+
+<div class="message-item">
+🐱 レオ
+</div>
+
+<div class="message-item">
+🐱 ソラ
+</div>
+
+</div>
+
+</div>
+
+<!-- PROFILE -->
+
+<div id="profile" class="page">
+
+<div class="container mt-4 text-center">
+
+<div class="profile-pic"></div>
+
+<h3 class="mt-3">
+@runa_cat
+</h3>
+
+<p>
+猫好き大学生
+</p>
+
+<div class="grid mt-4">
+
+<div class="cat-img"></div>
+<div class="cat-img"></div>
+<div class="cat-img"></div>
+<div class="cat-img"></div>
+<div class="cat-img"></div>
+<div class="cat-img"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- Bottom Nav -->
+
+<div class="bottom-nav">
+
+<div class="d-flex justify-content-around py-2">
+
+<button onclick="showPage('home')">🏠</button>
+
+<button onclick="showPage('ranking')">🏆</button>
+
+<button onclick="alert('投稿機能（未実装）')">➕</button>
+
+<button onclick="showPage('message')">💌</button>
+
+<button onclick="showPage('profile')">👤</button>
+
+</div>
+
+</div>
+
+<script>
+
+function showPage(pageId){
+
+document.querySelectorAll(".page")
+.forEach(page=>{
+page.classList.remove("active-page");
+});
+
+document
+.getElementById(pageId)
+.classList.add("active-page");
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ねこ専用SNS - PCワイドプロトタイプ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #ff9e80; /* ねこSNS用の優しいコーラルピンク */
+            --bg-color: #ffffff;
+            --text-main: #161823;
+            --text-sub: #73757f;
+            --icon-bg: rgba(22, 24, 35, 0.06);
+            --pastel-box: #ffdcd0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang SC', 'Source Han Sans', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 3カラムの全体コンテナ */
+        .app-container {
+            display: grid;
+            grid-template-columns: 260px 1fr 200px; 
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ==========================================
+           1. 左側：サイドバーナビゲーション
+        ========================================== */
+        .sidebar {
+            padding: 24px 16px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(22, 24, 35, 0.1);
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .sidebar-search-box {
+            display: flex;
+            align-items: center;
+            background: #f1f2f4;
+            padding: 10px 14px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .sidebar-search-box:focus-within {
+            border-color: var(--primary-color);
+            background: #fff;
+        }
+
+        .sidebar-search-box input {
+            border: none;
+            background: transparent;
+            flex: 1;
+            margin-left: 8px;
+            outline: none;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(22, 24, 35, 0.03);
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        .sidebar-footer {
+            font-size: 12px;
+            color: var(--text-sub);
+            line-height: 2;
+            padding-left: 14px;
+        }
+
+        /* ==========================================
+           2. 中央：メインコンテンツエリア
+        ========================================== */
+        .main-content {
+            padding: 24px;
+            overflow-y: auto;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* --- ホーム画面 --- */
+        #screen-home {
+            display: none;
+        }
+        #screen-home.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-container {
+            display: flex;
+            align-items: flex-end;
+            height: 100%;
+            max-height: 680px;
+            gap: 12px;
+        }
+
+        /* 実際の動画プレイヤーを入れる枠 */
+        .video-player-box {
+            width: 380px;
+            height: 100%;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        /* 静止画背景から、本物のvideoタグへアップデート */
+        .video-player-box video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 動画下部のグラデーションと情報テキスト */
+        .video-overlay-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 40px 20px 20px 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0)) 100%;
+            color: #fff;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            pointer-events: none; /* 下の動画タップを邪魔しない */
+            z-index: 2;
+        }
+        .video-overlay-info .username { font-weight: bold; margin-bottom: 5px; }
+        .video-overlay-info .caption { font-size: 14px; line-height: 1.4; }
+
+        /* 右側アクションボタン */
+        .action-sidebar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .action-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .avatar-wrapper { position: relative; margin-bottom: 8px; cursor: pointer; }
+        .user-avatar { width: 48px; height: 48px; border-radius: 50%; background-image: url('https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=100'); background-size: cover; border: 2px solid #fff;}
+        
+        /* フォロープラスボタンのインタラクティブ演出 */
+        .follow-plus { 
+            position: absolute; 
+            bottom: -5px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background-color: var(--primary-color); 
+            color: #fff; 
+            width: 18px; 
+            height: 18px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 10px; 
+            border: 2px solid #fff; 
+            transition: all 0.2s ease;
+        }
+        .follow-plus.followed {
+            background-color: #2ed573;
+            transform: translateX(-50%) scale(0); /* フォローすると消える演出 */
+        }
+
+        .icon-circle { 
+            width: 48px; 
+            height: 48px; 
+            border-radius: 50%; 
+            background-color: var(--icon-bg); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 20px; 
+            margin-bottom: 4px; 
+            transition: transform 0.1s ease;
+        }
+        .icon-circle:active {
+            transform: scale(0.9); /* クリック時の凹み */
+        }
+        .action-count { font-size: 12px; font-weight: bold; }
+
+        /* --- 共通見出し・グリッドスタイル --- */
+        .screen-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .back-btn {
+            cursor: pointer;
+            color: var(--text-sub);
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .grid-4x4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .grid-card {
+            aspect-ratio: 1;
+            background-size: cover;
+            background-position: center;
+            border-radius: 8px;
+            background-color: #eee;
+            position: relative;
+        }
+
+        /* --- 2. 検索・発見画面 --- */
+        .category-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 500px;
+            margin-bottom: 35px;
+        }
+        .category-btn {
+            background-color: var(--pastel-box);
+            padding: 30px;
+            text-align: center;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .category-btn:hover { transform: translateY(-2px); }
+
+        /* --- 3. ランキング画面 --- */
+        .tabs {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .tab { font-weight: bold; color: var(--text-sub); cursor: pointer; }
+        .tab.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
+        .rank-badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+
+        /* --- 4. メッセージ画面 --- */
+        .msg-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 600px;
+        }
+        .msg-row {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .msg-avatar { width: 50px; height: 50px; border-radius: 50%; background-size: cover; margin-right: 15px; }
+
+        /* --- 5. マイページ --- */
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        .big-avatar { width: 90px; height: 90px; border-radius: 50%; background-image: url('https://images.unsplash.com/photo-1561948955-570b270e7c36?w=300'); background-size: cover; }
+
+        /* --- 6. 動画アップロード画面 --- */
+        .upload-zone {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 60px;
+            text-align: center;
+            color: var(--text-sub);
+            cursor: pointer;
+            max-width: 500px;
+        }
+
+        /* ==========================================
+           3. 右側：ログインボタン & 上下スクロール
+        ========================================== */
+        .right-sidebar {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 24px 24px 40px 0;
+        }
+
+        .login-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .scroller-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(22, 24, 35, 0.12);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        /* ==========================================
+   6. マイページ（カスタマイズ）
+========================================== */
+.mypage-container {
+    text-align: center;
+    padding-top: 10px;
+}
+
+.mypage-profile-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin: 0 auto 12px auto;
+    background-image: url('https://images.unsplash.com/photo-1561948955-570b270e7c36?w=300'); /* ここを好きな猫画像に変更できます */
+    background-size: cover;
+    background-position: center;
+}
+
+.mypage-username {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text-main);
+    margin-bottom: 12px;
+}
+
+.mypage-edit-btn {
+    display: inline-block;
+    background: transparent;
+    border: 1px solid #c8a2c8; /* 優しくて薄いパープル・ピンク */
+    color: #6a5acd;
+    padding: 6px 36px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background 0.2s;
+}
+.mypage-edit-btn:active {
+    background-color: rgba(200, 162, 200, 0.1);
+}
+
+/* 投稿・いいね・保存のカウンター数値 */
+.mypage-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 24px;
+}
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.stat-label {
+    font-size: 11px;
+    color: #a0a0a0;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+.stat-count {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+/* かわいいナビゲーションタブ */
+.mypage-tabs {
+    display: flex;
+    justify-content: space-around;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+.mypage-tab {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-sub);
+    cursor: pointer;
+    position: relative;
+    padding: 4px 12px;
+}
+.mypage-tab.active {
+    color: var(--text-main);
+}
+.mypage-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #c8a2c8; /* アクティブな下線 */
+    border-radius: 2px;
+}
+
+/* 画像グリッド（角丸にアレンジ） */
+.mypage-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+.mypage-grid .grid-card {
+    border-radius: 8px; /* 画像の角を少し丸くしてかわいい印象に */
+}
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <div class="sidebar">
+        <div>
+            <div class="logo" onclick="navigateTo('screen-home')"><i class="fa-solid fa-cat"></i> ねこSNS</div>
+            
+            <div class="sidebar-search-box">
+                <i class="fa-solid fa-magnifying-glass" style="color: var(--text-sub); font-size: 14px;"></i>
+                <input type="text" id="sidebar-search-input" placeholder="検索する..." onfocus="navigateTo('screen-search')">
+            </div>
+
+            <div class="nav-menu">
+                <div class="nav-item active" id="menu-home" onclick="navigateTo('screen-home')">
+                    <i class="fa-solid fa-house"></i> ホーム
+                </div>
+                <div class="nav-item" id="menu-ranking" onclick="navigateTo('screen-ranking')">
+                    <i class="fa-solid fa-trophy"></i> ランキング
+                </div>
+                <div class="nav-item" id="menu-upload" onclick="navigateTo('screen-upload')">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> 動画アップロード
+                </div>
+                <div class="nav-item" id="menu-message" onclick="navigateTo('screen-message')">
+                    <i class="fa-solid fa-comment-dots"></i> メッセージ
+                </div>
+                <div class="nav-item" id="menu-mypage" onclick="navigateTo('screen-mypage')">
+                    <i class="fa-solid fa-user"></i> マイページ
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar-footer">
+            会社概要 ブログ ニュース<br>
+            規約とポリシー<br>
+            © 2026 ねこSNS
+        </div>
+    </div>
+
+    <div class="main-content">
+
+        <div id="screen-home" class="screen active">
+            <div class="video-container">
+                
+                <div class="video-player-box" onclick="toggleVideoPlay()">
+                    <video id="main-video" loop muted autoplay playsinline>
+                        <source src="neko.mp4" type="video/mp4">
+                    </video>
+                    
+                    <div class="video-overlay-info">
+                        <div class="username">cherry_cat31</div>
+                        <div class="caption">緑の光を全力で捕まえようとする必死な姿🐾 お尻のフリフリが最高です！ #ベンガル猫 #レーザーポインター #ねこのいる生活</div>
+                    </div>
+                </div>
+
+                <div class="action-sidebar">
+                    <div class="avatar-wrapper" onclick="toggleFollow(event)">
+                        <div class="user-avatar"></div>
+                        <div class="follow-plus" id="follow-btn"><i class="fa-solid fa-plus"></i></div>
+                    </div>
+                    <div class="action-item" onclick="toggleLike()">
+                        <div class="icon-circle" id="like-icon-circle">
+                            <i class="fa-solid fa-heart" id="like-icon" style="color: rgba(22,24,35,0.7);"></i>
+                        </div>
+                        <span class="action-count" id="like-count">37.1K</span>
+                    </div>
+                    <div class="action-item">
+                        <div class="icon-circle"><i class="fa-solid fa-comment-dots"></i></div>
+                        <span class="action-count">368</span>
+                    </div>
+                    <div class="action-item" onclick="toggleBookmark()">
+                        <div class="icon-circle" id="bookmark-icon-circle">
+                            <i class="fa-solid fa-bookmark" id="bookmark-icon" style="color: rgba(22,24,35,0.7);"></i>
+                        </div>
+                        <span class="action-count" id="bookmark-count">3397</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="screen-search" class="screen">
+            <div class="screen-title">カテゴリーから探す</div>
+            <div class="category-container">
+                <div class="category-btn" onclick="navigateTo('screen-category-detail')">種類</div>
+                <div class="category-btn" onclick="navigateTo('screen-category-detail')">性格</div>
+                <div class="category-btn" onclick="navigateTo('screen-category-detail')">年齢</div>
+                <div class="category-btn" onclick="navigateTo('screen-category-detail')">地域</div>
+            </div>
+            
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 15px;">あなたにオススメ</div>
+            <div class="grid-4x4">
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300')"></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1519052537078-e6302a4968d4?w=300')"></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=300')"></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1511044568932-338cba0ad803?w=300')"></div>
+            </div>
+        </div>
+
+        <div id="screen-category-detail" class="screen">
+            <div class="back-btn" onclick="navigateTo('screen-search')"><i class="fa-solid fa-chevron-left"></i> カテゴリー一覧に戻る</div>
+            <div class="screen-title">選択されたカテゴリーの結果</div>
+            <div class="grid-4x4">
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=300')"></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=300')"></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1529778873920-4da4926a72c2?w=300')"></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300')"></div>
+            </div>
+        </div>
+
+        <div id="screen-ranking" class="screen">
+            <div class="screen-title">注目のねこランキング</div>
+            <div class="tabs">
+                <div class="tab">月</div>
+                <div class="tab">週</div>
+                <div class="tab active">24時間</div>
+            </div>
+            <div class="grid-4x4">
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=300')"><div class="rank-badge">1位</div></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=300')"><div class="rank-badge">2位</div></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300')"><div class="rank-badge">3位</div></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1529778873920-4da4926a72c2?w=300')"><div class="rank-badge">4位</div></div>
+            </div>
+        </div>
+
+        <div id="screen-upload" class="screen">
+            <div class="screen-title">動画を投稿する</div>
+            <div class="upload-zone">
+                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 48px; margin-bottom: 15px; color: var(--primary-color);"></i>
+                <p>ファイルをドラッグ＆ドロップ、またはクリックして選択</p>
+                <p style="font-size: 12px; color: var(--text-sub); margin-top: 10px;">MP4、WebMなど（縦型動画を推奨）</p>
+            </div>
+        </div>
+
+        <div id="screen-message" class="screen">
+            <div class="screen-title">メッセージ</div>
+            <div class="msg-container">
+                <div class="msg-row">
+                    <div class="msg-avatar" style="background-image: url('https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=100')"></div>
+                    <div>
+                        <div style="font-weight: bold;">タマ先輩</div>
+                        <div style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">こんにちは！おやつ何食べてますか？</div>
+                    </div>
+                </div>
+                <div class="msg-row">
+                    <div class="msg-avatar" style="background-image: url('https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=100')"></div>
+                    <div>
+                        <div style="font-weight: bold;">ミケ</div>
+                        <div style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">さっきの動画いいねしました！</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-mypage" class="screen">
+            <div class="profile-section">
+                <div class="big-avatar"></div>
+                <div>
+                    <div style="font-size: 22px; font-weight: bold;">スコフォのマイケル🐾</div>
+                    <div style="color: var(--text-sub); font-size: 14px; margin-top: 6px;">@scottish_mike ・ 投稿3本 ・ フォロワー120人</div>
+                </div>
+            </div>
+            <div style="font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">自分の投稿</div>
+            <div class="grid-4x4">
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1561948955-570b270e7c36?w=300')"></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1511044568932-338cba0ad803?w=300')"></div>
+                <div class="grid-card" style="background-image: url('https://images.unsplash.com/photo-1548247416-ec66f4900b2e?w=300')"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="right-sidebar">
+        <button class="login-btn">ログイン</button>
+        <div class="scroller-buttons">
+            <div class="scroll-btn"><i class="fa-solid fa-chevron-up"></i></div>
+            <div class="scroll-btn"><i class="fa-solid fa-chevron-down"></i></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 【インタラクティブ機能1】動画の再生・一時停止切り替え
+    function toggleVideoPlay() {
+        const video = document.getElementById('main-video');
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
+
+    // 【インタラクティブ機能2】実際のいいね切り替え
+    let isLiked = false;
+    function toggleLike() {
+        const likeIcon = document.getElementById('like-icon');
+        const likeCount = document.getElementById('like-count');
+        
+        isLiked = !isLiked;
+        if (isLiked) {
+            likeIcon.style.color = '#ff4757'; // ハートを赤色にする
+            likeCount.innerText = "37.2K";   // カウントを1増やす
+        } else {
+            likeIcon.style.color = 'rgba(22,24,35,0.7)'; // 元の色に戻す
+            likeCount.innerText = "37.1K";
+        }
+    }
+
+    // 【インタラクティブ機能3】実際のブックマーク切り替え
+    let isBookmarked = false;
+    function toggleBookmark() {
+        const bookmarkIcon = document.getElementById('bookmark-icon');
+        const bookmarkCount = document.getElementById('bookmark-count');
+
+        isBookmarked = !isBookmarked;
+        if (isBookmarked) {
+            bookmarkIcon.style.color = '#ffa502'; // ブックマークをオレンジにする
+            bookmarkCount.innerText = "3,398";
+        } else {
+            bookmarkIcon.style.color = 'rgba(22,24,35,0.7)';
+            bookmarkCount.innerText = "3397";
+        }
+    }
+
+    // 【インタラクティブ機能4】フォローボタン消去演出
+    function toggleFollow(event) {
+        event.stopPropagation(); // 親要素の動画クリックイベント発火を防ぐ
+        const followBtn = document.getElementById('follow-btn');
+        followBtn.classList.add('followed');
+    }
+
+    // 画面切り替えナビゲーション制御
+    function navigateTo(screenId) {
+        const video = document.getElementById('main-video');
+        
+        // 他の画面に移動するときは動画を停止、ホームに戻ったら自動再生
+        if (screenId !== 'screen-home' && video) {
+            video.pause();
+        } else if (screenId === 'screen-home' && video) {
+            video.play();
+        }
+
+        // すべての画面を非表示にする
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(screen => screen.classList.remove('active'));
+
+        // 対象の画面を表示する
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+        }
+
+        // 左メニューのActiveクラスを制御
+        const menuItems = document.querySelectorAll('.nav-item');
+        menuItems.forEach(item => item.classList.remove('active'));
+
+        // 検索以外の画面にいくときは、サイドバーの文字入力をクリアする
+        if (screenId !== 'screen-search' && screenId !== 'screen-category-detail') {
+            document.getElementById('sidebar-search-input').value = '';
+        }
+
+        // 画面IDに応じたメニュー項目を光らせる
+        if (screenId === 'screen-home') {
+            document.getElementById('menu-home').classList.add('active');
+        } else if (screenId === 'screen-ranking') {
+            document.getElementById('menu-ranking').classList.add('active');
+        } else if (screenId === 'screen-upload') {
+            document.getElementById('menu-upload').classList.add('active');
+        } else if (screenId === 'screen-message') {
+            document.getElementById('menu-message').classList.add('active');
+        } else if (screenId === 'screen-mypage') {
+            document.getElementById('menu-mypage').classList.add('active');
+        }
+    }
+</script>
+
+</body>
+</html>
